@@ -15,6 +15,8 @@ import base64
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib
 import seaborn as sns
+from pyecharts.charts import Line, Grid
+from pyecharts import options as opts
 
 # Set font and backend configuration
 plt.rcParams['font.family'] = 'Arial'
@@ -222,6 +224,11 @@ def create_line_chart(df1, df2, sensor, title, ref_name, compare_name, highlight
     plt.ylabel('Value', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.legend()
+    
+    # 줌 기능 활성화
+    plt.gcf().canvas.toolbar_visible = True
+    plt.gcf().canvas.header_visible = True
+    plt.tight_layout()
     
     # Save image to memory
     buf = io.BytesIO()
@@ -466,8 +473,9 @@ if uploaded_files:
                                 pos_top="5%"
                             ),
                             legend_opts=opts.LegendOpts(
-                                pos_top="15%",
-                                orient="horizontal"
+                                pos_right="5%",  # Position at the right
+                                pos_top="middle",  # Vertically center
+                                orient="vertical"  # Stack legends vertically
                             ),
                             xaxis_opts=opts.AxisOpts(
                                 name="Step",
@@ -479,7 +487,12 @@ if uploaded_files:
                                 name_location="center",
                                 name_gap=40
                             ),
-                            tooltip_opts=opts.TooltipOpts(trigger="axis")
+                            tooltip_opts=opts.TooltipOpts(trigger="axis"),
+                            # 줌 기능 추가
+                            datazoom_opts=[
+                                opts.DataZoomOpts(range_start=0, range_end=100),  # 슬라이더 형태의 줌
+                                opts.DataZoomOpts(type_="inside")  # 마우스 휠/드래그로 줌 가능
+                            ]
                         )
 
                         st_pyecharts(line, height="400px", key=f"chart_{idx}")
@@ -500,7 +513,12 @@ if uploaded_files:
                                         fig, ax = plt.subplots(figsize=(10, 6))
                                         ax.plot(filtered_df1['step'], filtered_df1[sensor], label=ref_log, linewidth=2)
                                         ax.plot(filtered_df2['step'], filtered_df2[sensor], label=compare_log, linewidth=2, linestyle='--')
-                                        
+                                        plt.tight_layout()
+                                        # 줌 기능 활성화
+                                        fig.canvas.toolbar_visible = True
+                                        fig.canvas.header_visible = True
+
+                                        st.pyplot(fig)
                                         # Highlight anomalies if enabled
                                         if highlight_anomalies:
                                             threshold = filtered_df1[sensor].std() * 2
